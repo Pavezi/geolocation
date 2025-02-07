@@ -9,7 +9,7 @@ import { expect, assert } from 'chai';
 import './database';
 import { Region, RegionModel, UserModel } from './models';
 import GeoLib from './lib';
-import server from './server';
+import server from './app';
 
 describe('Models', () => {
   let user;
