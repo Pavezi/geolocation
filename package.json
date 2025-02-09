@@ -4,7 +4,9 @@
   "description": "DevOZ - Tech test",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.ts",
+    "dev": "nodemon --ext ts --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
     "test": "mocha --require ts-node/register ./src/**/*.spec.ts --exit"
   },
   "author": "",
