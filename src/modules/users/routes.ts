@@ -1,76 +1,45 @@
 import { Router } from "express";
-import { UserModel } from "./models/UserModel";
+import { UserService } from "./services/UserService";
+import { HttpStatus } from "../../enums/status";
 
-const usersRoutes = Router();
+const router = Router();
 
-const STATUS = {
-  OK: 200,
-  CREATED: 201,
-  UPDATED: 201,
-  NOT_FOUND: 404,
-  BAD_REQUEST: 400,
-  INTERNAL_SERVER_ERROR: 500,
-};
+router.get("/", async (req, res) => {
+  const users = await UserService.getAllUsers();
+  res.json(users);
+});
 
-usersRoutes.get("/", async (req, res) => {
+router.get("/:id", async (req, res) => {
+  const user = await UserService.getUserById(req.params.id);
+  if (!user) return res
+    .status(HttpStatus.NOT_FOUND)
+    .json({ message: "Usuário não encontrado" });
+  res.json(user);
+});
+
+router.post("/", async (req, res) => {
   try {
-    const { page, limit } = req.query;
-    const [users, total] = await Promise.all([
-      UserModel.find().lean(),
-      UserModel.countDocuments(),
-    ]);
-
-    return res.status(STATUS.OK).json({
-      rows: users,
-      page,
-      limit,
-      total,
-    });
-  } catch (error) {
-    return res
-      .status(STATUS.INTERNAL_SERVER_ERROR)
-      .json({ message: "Erro ao buscar usuários", error });
+    const user = await UserService.createUser(req.body);
+    res.status(HttpStatus.CREATED).json(user);
+  } catch (error: any) {
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 });
 
-usersRoutes.get("/:id", async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await UserModel.findById(id).lean();
-
-    if (!user) {
-      return res
-        .status(STATUS.NOT_FOUND)
-        .json({ message: "Usuário não encontrado" });
-    }
-
-    return res.status(STATUS.OK).json(user);
-  } catch (error) {
-    return res
-      .status(STATUS.INTERNAL_SERVER_ERROR)
-      .json({ message: "Erro ao buscar usuário", error });
+    const user = await UserService.updateUser(req.params.id, req.body);
+    if (!user)
+      return res.status(HttpStatus.NOT_FOUND).json({ message: "Usuário não encontrado" });
+    res.json(user);
+  } catch (error: any) {
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 });
 
-usersRoutes.put("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { update } = req.body;
-
-    const user = await UserModel.findByIdAndUpdate(id, update, { new: true });
-
-    if (!user) {
-      return res
-        .status(STATUS.NOT_FOUND)
-        .json({ message: "Usuário não encontrado" });
-    }
-
-    return res.status(STATUS.UPDATED).json(user);
-  } catch (error) {
-    return res
-      .status(STATUS.INTERNAL_SERVER_ERROR)
-      .json({ message: "Erro ao atualizar usuário", error });
-  }
+router.delete("/:id", async (req, res) => {
+  await UserService.deleteUser(req.params.id);
+  res.status(HttpStatus.OK).send();
 });
 
-export default usersRoutes;
+export default router;
