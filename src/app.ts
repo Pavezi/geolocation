@@ -1,15 +1,16 @@
 import * as express from "express";
-import usersRoutes from "./modules/users/routes";
-import regionsRoutes from "./modules/regions/routes";
+import router from "./routes";
 import { connectDB } from "./core/database/connection";
+import { setupSwagger } from "./config/swagger";
 
 const app = express();
+
+setupSwagger(app);
 
 app.use(express.json());
 
 connectDB();
 
-app.use("/users", usersRoutes);
-app.use("/regions", regionsRoutes);
+app.use("/api", router);
 
 export default app;
