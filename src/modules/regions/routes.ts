@@ -1,25 +1,12 @@
 import { Router } from "express";
-import { RegionModel } from "./models/RegionModel";
+import { RegionController } from "./controllers/RegionController";
 
-const regionsRoutes = Router();
+const router = Router();
 
-const STATUS = {
-  OK: 200,
-  CREATED: 201,
-  NOT_FOUND: 404,
-  BAD_REQUEST: 400,
-  INTERNAL_SERVER_ERROR: 500,
-};
+router.post("/", RegionController.createRegion);
+router.get("/", RegionController.getAllRegions);
+router.get("/contains", RegionController.getRegionsContainingPoint);
+router.get("/near", RegionController.getRegionsNearPoint);
+router.delete("/:id", RegionController.deleteRegion);
 
-regionsRoutes.get("/", async (req, res) => {
-  try {
-    const regions = await RegionModel.find().lean();
-    return res.status(STATUS.OK).json(regions);
-  } catch (error) {
-    return res
-      .status(STATUS.INTERNAL_SERVER_ERROR)
-      .json({ message: "Erro ao buscar regiões", error });
-  }
-});
-
-export default regionsRoutes;
+export default router;

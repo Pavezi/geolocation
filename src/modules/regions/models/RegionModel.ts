@@ -1,11 +1,10 @@
 import {
   prop,
-  Ref,
   pre,
   getModelForClass,
   modelOptions,
+  Ref,
 } from "@typegoose/typegoose";
-import { User, UserModel } from "../../users/models/UserModel";
 import mongoose from "mongoose";
 
 @pre<Region>("save", async function (next) {
@@ -14,6 +13,7 @@ import mongoose from "mongoose";
   }
 
   if (this.isNew) {
+    const UserModel = mongoose.model("User");
     const user = await UserModel.findById(this.user);
     if (user) {
       user.regions.push(this._id);
@@ -28,8 +28,8 @@ export class Region {
   @prop({ required: true })
   name!: string;
 
-  @prop({ ref: () => User, required: true })
-  user!: Ref<User>;
+  @prop({ ref: "User", required: true, type: mongoose.Schema.Types.ObjectId })
+  user!: Ref<mongoose.Schema.Types.ObjectId>;
 }
 
 export const RegionModel = getModelForClass(Region);
