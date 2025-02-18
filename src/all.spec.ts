@@ -1,87 +1,167 @@
-import 'reflect-metadata';
+import "reflect-metadata";
+import mongoose from "mongoose";
+import * as supertest from "supertest";
+import { faker } from "@faker-js/faker";
+import { expect } from "chai";
+import UserModel, { IUser as User } from "./modules/users/models/UserModel";
+import { RegionModel, Region } from "./modules/regions/models/RegionModel";
+import server from "./app";
+import { connectToDatabase, disconnectFromDatabase } from "./test/setup";
 
-import * as mongoose from 'mongoose';
-import * as supertest from 'supertest';
-import * as sinon from 'sinon';
-import { faker } from '@faker-js/faker';
-import { expect, assert } from 'chai';
+type RegionData = {
+  user: mongoose.Types.ObjectId;
+  name: string;
+  coordinates: {
+    type: "Polygon";
+    coordinates: number[][][];
+  };
+};
 
-import './database';
-import { Region, RegionModel, UserModel } from './models';
-import GeoLib from './lib';
-import server from './server';
-
-describe('Models', () => {
-  let user;
-  let session;
-  let geoLibStub: Partial<typeof GeoLib> = {};
-
+describe("Integration Tests", () => {
   before(async () => {
-    geoLibStub.getAddressFromCoordinates = sinon.stub(GeoLib, 'getAddressFromCoordinates').resolves(faker.location.streetAddress({ useFullAddress: true }));
-    geoLibStub.getCoordinatesFromAddress = sinon.stub(GeoLib, 'getCoordinatesFromAddress').resolves({ lat: faker.location.latitude(), lng: faker.location.longitude() });
+    console.log("📦 Iniciando os testes...");
+    await connectToDatabase();
+    console.log("📦 Conexão com o MongoDB estabelecida.");
+  });
 
-    session = await mongoose.startSession();
-    user = await UserModel.create({
-      name: faker.person.firstName(),
-      email: faker.internet.email(),
-      address: faker.location.streetAddress({ useFullAddress: true }),
+  after(async () => {
+    console.log("📦 Finalizando os testes...");
+    await disconnectFromDatabase();
+    console.log("📦 Conexão com o MongoDB encerrada.");
+  });
+
+  describe("Models", () => {
+    let user: User;
+
+    beforeEach(async () => {
+      await UserModel.deleteMany({});
+      await RegionModel.deleteMany({});
+
+      user = await UserModel.create({
+        name: faker.person.firstName(),
+        email: faker.internet.email(),
+        address: "Avenida Paulista, São Paulo",
+      });
+    });
+
+    describe("UserModel", () => {
+      it("should create a user with required fields", async () => {
+        expect(user).to.have.property("_id");
+        expect(user).to.have.property("name").that.is.a("string");
+        expect(user).to.have.property("email").that.is.a("string");
+        expect(user).to.have.property("address").that.is.a("string");
+        expect(user).to.have.property("coordinates").that.is.an("array");
+      });
+    });
+
+    describe("RegionModel", () => {
+      it("should create a region", async () => {
+        const regionData: RegionData = {
+          name: "51",
+          coordinates: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [173.933, -35.239],
+                [174.40343, -35.98525],
+                [173.933, -35.89811],
+                [173.933, -35.239],
+              ],
+            ],
+          },
+          user: user._id,
+        };
+
+        const [region] = await RegionModel.create([regionData]);
+
+        expect(region.name).to.equal(regionData.name);
+        expect(region.coordinates.type).to.equal(regionData.coordinates.type);
+        expect(region.coordinates.coordinates[0]).to.deep.equal(
+          regionData.coordinates.coordinates[0]
+        );
+        expect(region.user.toString()).to.equal(regionData.user.toString());
+      });
+
+      it("should rollback changes in case of failure", async () => {
+        const initialRegionsCount = await RegionModel.countDocuments({
+          user: user._id,
+        });
+
+        try {
+          await RegionModel.create([{ user: user._id }]);
+          throw new Error("Should have thrown an error");
+        } catch (error) {
+          const finalRegionsCount = await RegionModel.countDocuments({
+            user: user._id,
+          });
+          expect(finalRegionsCount).to.equal(initialRegionsCount);
+        }
+      });
     });
   });
 
-  after(() => {
-    sinon.restore();
-    session.endSession();
-  });
+  describe("Routes", () => {
+    let user: User;
 
-  beforeEach(() => {
-    session.startTransaction();
-  });
-
-  afterEach(() => {
-    session.commitTransaction();
-  });
-
-  describe('UserModel', () => {
-    it('should create a user', async () => {
-      expect(1).to.be.eq(1);
-    });
-  });
-
-  describe('RegionModel', () => {
-    it('should create a region', async () => {
-      const regionData: Omit<Region, '_id'> = {
-        user: user._id,
-        name: faker.person.fullName()
-      };
-
-      const [region] = await RegionModel.create([regionData]);
-
-      expect(region).to.deep.include(regionData);
+    before(async () => {
+      user = await UserModel.create({
+        name: faker.person.firstName(),
+        email: faker.internet.email(),
+        address: "Avenida Paulista, São Paulo",
+      });
+      console.log("Usuário criado para os testes de rota:", user._id);
     });
 
-    it('should rollback changes in case of failure', async () => {
-      const userRecord = await UserModel.findOne({ _id: user._id }).select('regions').lean();
-      try {
-        await RegionModel.create([{ user: user._id }]);
-
-        assert.fail('Should have thrown an error');
-      } catch (error) {
-        const updatedUserRecord = await UserModel.findOne({ _id: user._id }).select('regions').lean();
-
-        expect(userRecord).to.deep.eq(updatedUserRecord);
-      }
+    after(async () => {
+      await UserModel.deleteMany({});
+      await RegionModel.deleteMany({});
+      console.log("Todos os usuários foram removidos após os testes.");
     });
-  });
 
-  it('should return a list of users', async () => {
-    const response = supertest(server).get(`/user`);
+    describe("GET /users", () => {
+      it("should return a list of users", async () => {
+        const response = await supertest(server).get("/api/users");
+        expect(response.status).to.equal(200);
+        expect(response.body).to.be.an("array");
+        expect(response.body[0]).to.have.property("_id");
+        expect(response.body[0]).to.have.property("name");
+        expect(response.body[0]).to.have.property("email");
+      });
+    });
 
-    expect(response).to.have.property('status', 200);
-  });
+    describe("POST /users", () => {
+      it("should create a new user", async () => {
+        const userData = {
+          name: faker.person.firstName(),
+          email: faker.internet.email(),
+          address: "Avenida Paulista, São Paulo",
+        };
+        console.log("Enviando dados para POST /users:", userData);
+        const response = await supertest(server)
+          .post("/api/users")
+          .send(userData);
+        expect(response.status).to.equal(201);
+        expect(response.body).to.have.property("_id");
+        expect(response.body.name).to.equal(userData.name);
+        expect(response.body.email).to.equal(userData.email);
+      });
 
-  it('should return a user', async () => {
-    const response = await supertest(server).get(`/users/${user._id}`);
+      it("should return 400 if data is invalid", async () => {
+        const response = await supertest(server).post("/api/users").send({});
+        expect(response.status).to.equal(400);
+        expect(response.body).to.have.property("message");
+      });
+    });
 
-    expect(response).to.have.property('status', 200);
+    describe("PUT /users/:id", () => {
+      it("should update a user", async () => {
+        const newName = faker.person.firstName();
+        const response = await supertest(server)
+          .put(`/api/users/${user._id}`)
+          .send({ name: newName });
+        expect(response.status).to.equal(200);
+        expect(response.body).to.have.property("name").that.equals(newName);
+      });
+    });
   });
 });

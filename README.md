@@ -1,10 +1,10 @@
-# OZmap Challenge: Construindo a Geolocalização do Futuro
+# Construindo a Geolocalização do Futuro
 
-Olá desenvolvedor(a)! Bem-vindo(a) ao Desafio Técnico do OZmap. Este é um projeto que simula um cenário real de nossa empresa, onde você irá desempenhar um papel crucial ao desenvolver uma API RESTful robusta para gerenciar usuários e localizações. Estamos muito animados para ver sua abordagem e solução!
+Este é um projeto que simula um cenário real, onde uma API RESTful robusta para gerenciar usuários e localizações.
 
 ## 🌍 **Visão Geral**
 
-Em um mundo conectado e globalizado, a geolocalização se torna cada vez mais essencial. E aqui no OZmap, buscamos sempre otimizar e melhorar nossos sistemas. Assim, você encontrará um protótipo que precisa de sua experiência para ser corrigido, melhorado e levado ao próximo nível.
+Em um mundo conectado e globalizado, a geolocalização se torna cada vez mais essencial.
 
 ## 🛠 **Especificações Técnicas**
 
@@ -13,7 +13,7 @@ Em um mundo conectado e globalizado, a geolocalização se torna cada vez mais e
 - **ORM**: Mongoose / Typegoose.
 - **Linguagem**: Typescript.
 - **Formatação e Linting**: Eslint + prettier.
-- **Comunicação com MongoDB**: Deve ser feita via container.
+- **Comunicação com MongoDB**: Feita via container.
 
 ## 🔍 **Funcionalidades Esperadas**
 
@@ -47,16 +47,7 @@ Em um mundo conectado e globalizado, a geolocalização se torna cada vez mais e
 ### Testes
 - Unitários e de integração.
 
-## 🌟 **Diferenciais**
-
-- Autenticação não é requisito, podendo então o usuário ser fornecido junto do corpo da requisição. Caso implemente autenticação, o usuário deve ser obtido a partir do token.
-- Interface básica de usuário.
-- Documentação completa da API.
-- Internacionalização.
-- Cobertura de código.
-- Utilização de mongo session
-
-## ⚖ **Critérios de Avaliação**
+## ⚖ **Pontos chave**
 
 1. Organização e clareza do código.
 2. Estruturação do projeto.
@@ -71,12 +62,11 @@ Em um mundo conectado e globalizado, a geolocalização se torna cada vez mais e
 
 ## 🚀 **Entrega**
 
-1. Crie um repositório público com a base desse código.
-2. Crie uma branch para realizar o seu trabalho.
-3. Ao finalizar, faça um pull request para a branch `main` do seu repositório.
-4. Envie um email para `rh@ozmap.com.br` informando que o teste foi concluído.
-5. Aguarde nosso feedback.
+1. Um repositório público com a base desse código.
+2. Uma branch onde realizei o trabalho.
+3. Finalizando com um pull request para a branch `main` do meu repositório.
+4. Documentação e request disponíveis no postman https://app.getpostman.com/join-team?invite_code=88659e251f5258388079767eb0d7363d56bf52508678893e276551a5242cedf5&target_code=c5cb1385c793cc13f1beaf7328183589
 
 ---
 
-Estamos ansiosos para ver sua implementação e criatividade em ação! Boa sorte e que a força do código esteja com você! 🚀
+Que a força do código esteja com você! 🚀
