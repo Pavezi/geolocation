@@ -6,6 +6,7 @@ import {
   ValidateIf,
   ArrayMinSize,
   ArrayMaxSize,
+  IsNumber,
 } from "class-validator";
 
 export class CreateUserDTO {
@@ -27,9 +28,6 @@ export class CreateUserDTO {
   @ArrayMinSize(2)
   @ArrayMaxSize(2)
   @ValidateIf((o) => !o.address)
-  @IsString({
-    message: "Se não fornecer o endereço, coordenadas é obrigatório",
-  })
   coordinates?: [number, number];
 }
 

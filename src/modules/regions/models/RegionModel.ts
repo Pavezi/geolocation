@@ -1,35 +1,23 @@
-import {
-  prop,
-  pre,
-  getModelForClass,
-  modelOptions,
-  Ref,
-} from "@typegoose/typegoose";
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-@pre<Region>("save", async function (next) {
-  if (!this._id) {
-    this._id = new mongoose.Types.ObjectId();
-  }
-
-  if (this.isNew) {
-    const UserModel = mongoose.model("User");
-    const user = await UserModel.findById(this.user);
-    if (user) {
-      user.regions.push(this._id);
-      await user.save();
-    }
-  }
-
-  next();
-})
-@modelOptions({ schemaOptions: { timestamps: true } })
-export class Region {
-  @prop({ required: true })
-  name!: string;
-
-  @prop({ ref: "User", required: true, type: mongoose.Schema.Types.ObjectId })
-  user!: Ref<mongoose.Schema.Types.ObjectId>;
+export interface Region extends Document {
+  name: string;
+  user: mongoose.Types.ObjectId;
+  coordinates: {
+    type: string;
+    coordinates: number[][][];
+  };
 }
 
-export const RegionModel = getModelForClass(Region);
+const RegionSchema = new Schema<Region>({
+  name: { type: String, required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  coordinates: {
+    type: { type: String, enum: ["Polygon"], required: true },
+    coordinates: { type: [[[Number]]], required: true },
+  },
+});
+
+RegionSchema.index({ coordinates: "2dsphere" });
+
+export const RegionModel = mongoose.model<Region>("Region", RegionSchema);

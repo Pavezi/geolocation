@@ -4,28 +4,54 @@ import { CreateRegionDTO, RegionDTO } from "../dtos/RegionDTO";
 export class RegionService {
   static async createRegion(data: CreateRegionDTO): Promise<RegionDTO> {
     const region = await RegionModel.create(data);
-    return region.toObject();
+    return {
+      id: region._id.toString(),
+      name: region.name,
+      coordinates: region.coordinates.coordinates[0].map(
+        (coord: number[]): [number, number] => [coord[0], coord[1]]
+      ),
+      user: region.user.toString(),
+    };
   }
 
   static async getAllRegions(): Promise<RegionDTO[]> {
-    return await RegionModel.find().lean();
+    const regions = await RegionModel.find().lean();
+    return regions.map((region) => ({
+      id: region._id.toString(),
+      name: region.name,
+      coordinates: region.coordinates.coordinates[0].map(
+        (coord: number[]): [number, number] => [coord[0], coord[1]]
+      ),
+      user: region.user.toString(),
+    }));
   }
 
   static async getRegionsContainingPoint(
     point: [number, number]
   ): Promise<RegionDTO[]> {
-    return await RegionModel.find({
-      coordinates: {
+    const regions = await RegionModel.find({
+      "coordinates.coordinates": {
         $geoIntersects: { $geometry: { type: "Point", coordinates: point } },
       },
-    }).lean();
+    })
+      .populate("user", "name email")
+      .lean();
+
+    return regions.map((region) => ({
+      id: region._id.toString(),
+      name: region.name,
+      coordinates: region.coordinates.coordinates[0].map(
+        (coord: number[]): [number, number] => [coord[0], coord[1]]
+      ),
+      user: region.user.toString(),
+    }));
   }
 
   static async getRegionsNearPoint(
     point: [number, number],
     maxDistance: number
   ): Promise<RegionDTO[]> {
-    return await RegionModel.find({
+    const regions = await RegionModel.find({
       coordinates: {
         $near: {
           $geometry: { type: "Point", coordinates: point },
@@ -33,9 +59,19 @@ export class RegionService {
         },
       },
     }).lean();
+
+    return regions.map((region) => ({
+      id: region._id.toString(),
+      name: region.name,
+      coordinates: region.coordinates.coordinates[0].map(
+        (coord: number[]): [number, number] => [coord[0], coord[1]]
+      ),
+      user: region.user.toString(),
+    }));
   }
 
-  static async deleteRegion(regionId: string): Promise<void> {
-    await RegionModel.deleteOne({ _id: regionId });
+  static async deleteRegion(regionId: string): Promise<boolean> {
+    const result = await RegionModel.deleteOne({ _id: regionId });
+    return result.deletedCount > 0;
   }
 }

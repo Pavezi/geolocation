@@ -2,34 +2,41 @@ import {
   IsNotEmpty,
   IsString,
   IsArray,
-  ValidateIf,
-  ArrayMinSize,
-  ArrayMaxSize,
   ValidateNested,
   IsMongoId,
+  IsObject,
 } from "class-validator";
 import { Type } from "class-transformer";
+
+class PolygonDto {
+  @IsString()
+  @IsNotEmpty()
+  type: "Polygon" = "Polygon";
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Array)
+  coordinates!: number[][][];
+}
 
 export class CreateRegionDTO {
   @IsString()
   @IsNotEmpty()
   name!: string;
 
-  @IsArray()
-  @IsNotEmpty()
-  @ArrayMinSize(4)
-  @ArrayMaxSize(4)
-  @ValidateNested({ each: true })
-  @Type(() => Array)
-  coordinates!: [number, number][];
+  @IsObject()
+  @ValidateNested()
+  @Type(() => PolygonDto)
+  coordinates!: PolygonDto;
 
   @IsMongoId()
-  ownerId!: string;
+  @IsNotEmpty()
+  user!: string;
 }
 
 export class RegionDTO {
   id!: string;
   name!: string;
   coordinates!: [number, number][];
-  ownerId!: string;
+  user!: string;
 }

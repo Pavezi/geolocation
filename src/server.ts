@@ -1,5 +1,6 @@
 import app from "./app";
 import config from "./config";
+import "reflect-metadata";
 
 const PORT = config.port;
 

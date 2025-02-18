@@ -20,7 +20,9 @@ export class RegionController {
   static async getAllRegions(req: Request, res: Response) {
     try {
       const regions = await RegionService.getAllRegions();
-      return res.json(regions);
+      return regions.length
+        ? res.json(regions)
+        : res.status(404).json({ message: "Nenhuma região encontrada." });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao buscar regiões", error });
     }
@@ -36,9 +38,13 @@ export class RegionController {
         parseFloat(longitude as string),
         parseFloat(latitude as string),
       ];
-      const regions = await RegionService.getRegionsContainingPoint(point);
 
-      return res.json(regions);
+      const regions = await RegionService.getRegionsContainingPoint(point);
+      return regions.length
+        ? res.json(regions)
+        : res.status(404).json({
+            message: "Nenhuma região encontrada contendo o ponto especificado.",
+          });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao buscar regiões", error });
     }
@@ -57,7 +63,11 @@ export class RegionController {
       const distance = parseFloat(maxDistance as string);
 
       const regions = await RegionService.getRegionsNearPoint(point, distance);
-      return res.json(regions);
+      return regions.length
+        ? res.json(regions)
+        : res.status(404).json({
+            message: "Nenhuma região encontrada próxima ao ponto especificado.",
+          });
     } catch (error) {
       return res
         .status(500)
@@ -68,11 +78,14 @@ export class RegionController {
   static async deleteRegion(req: Request, res: Response) {
     try {
       const { id } = req.params;
-
-      await RegionService.deleteRegion(id);
-      return res.status(204).send();
+      const deleted = await RegionService.deleteRegion(id);
+      return deleted
+        ? res.status(204).send()
+        : res.status(404).json({
+            message: "Nenhuma região encontrada com o ID especificado.",
+          });
     } catch (error) {
-      return res.status(500).json({ message: "Erro ao deletar região", error });
+      return res.status(500).json({ message: "Erro ao deletar região", error  });
     }
   }
 }
