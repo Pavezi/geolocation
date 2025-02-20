@@ -6,7 +6,7 @@
     "experimentalDecorators": true,
     "sourceMap": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "strict": true
   },
   "types": ["reflect-metadata", "mocha"],
